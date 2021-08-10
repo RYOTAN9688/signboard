@@ -28,7 +28,7 @@ const Container = styled.div.attrs({
   position: relative;
   border: solid 1px ${color.Silver};
   border-radius: 6px;
-  box-shadow: 0 1px 3px hsla(0, 0%, 7% 0.1);
+  box-shadow: 0 1px 3px hsla(0, 0%, 7%, 0.1);
   padding: 8px 32px;
   background-color: ${color.White};
   cursor: move;
