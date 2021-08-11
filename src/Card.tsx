@@ -1,26 +1,120 @@
-import React from 'react'
+import React, { useState, useRef } from 'react'
 import styled from 'styled-components'
 import * as color from './color'
 import { CheckIcon as _checkIcon, TrashIcon } from './icon'
 
 //Cardコンポーネントは中身のテキストをtext属性として受けとれるようにしている
 //textにURLが含まれた場合はその部分をリンクに変えている
-export const Card = ({ text }: { text?: string }) => (
-  <Container>
-    <CheckIcon />
+export const Card = ({ text }: { text?: string }) => {
+  const [drag, setDrag] = useState(false)
+  return (
+    <Container
+      style={{ opacity: drag ? 0.5 : undefined }}
+      onDragStart={() => {
+        setDrag(true)
+      }}
+      onDragEnd={() => {
+        setDrag(false)
+      }}
+    >
+      <CheckIcon />
 
-    {text?.split(/(https?:\/\/\S+)/g).map((fragment, i) =>
-      i % 2 === 0 ? (
-        <Text key={i}>{fragment}</Text>
-      ) : (
-        <Link key={i} href={fragment}>
-          {fragment}
-        </Link>
-      ),
-    )}
-    <DeleteButton />
-  </Container>
-)
+      {text?.split(/(https?:\/\/\S+)/g).map((fragment, i) =>
+        i % 2 === 0 ? (
+          <Text key={i}>{fragment}</Text>
+        ) : (
+          <Link key={i} href={fragment}>
+            {fragment}
+          </Link>
+        ),
+      )}
+      <DeleteButton />
+    </Container>
+  )
+}
+const DropArea = ({
+  disabled,
+  onDrop,
+  children,
+  className,
+  style,
+}: {
+  disabled?: boolean
+  onDrop?(): void
+  children?: React.ReactNode
+  className?: string
+  style?: React.CSSProperties
+}) => {
+  const [isTarget, setIsTarget] = useState(false)
+  const visible = !disabled && isTarget
+
+  const [dragOver, onDragOver] = useDragAutoLeave()
+
+  return (
+    <DropAreaContainer
+      style={style}
+      className={className}
+      onDragOver={ev => {
+        if (disabled) return
+        ev.preventDefault()
+        onDragOver(() => setIsTarget(false))
+      }}
+      onDragEnter={() => {
+        if (disabled || dragOver.current) return
+        setIsTarget(true)
+      }}
+      onDrop={() => {
+        if (disabled) return
+        setIsTarget(false)
+        onDrop?.()
+      }}
+    >
+      <DropAreaIndicator
+        style={{
+          height: !visible ? 0 : undefined,
+          borderWidth: !visible ? 0 : undefined,
+        }}
+      />
+      {children}
+    </DropAreaContainer>
+  )
+}
+
+//dragOver　イベントが継続中かどうかをrefとして返す
+//timeOut　　経過後に自動でフラグがfalseになる
+//＠param timeout　自動でフラグをfalseにするまでの時間(ms)
+
+const useDragAutoLeave = (timeout: number = 100) => {
+  const dragOver = useRef(false)
+  const timer = useRef(0)
+
+  return [
+    dragOver,
+    (onDragLeave?: () => void) => {
+      clearTimeout(timer.current) //現在のタイム
+      dragOver.current = true
+      timer.current = setTimeout(() => {
+        dragOver.current = false
+        onDragLeave?.()
+      }, timeout)
+    },
+  ] as const
+}
+
+const DropAreaContainer = styled.div`
+  > :not(:first-child) {
+    margin-top: 8px;
+  }
+`
+
+const DropAreaIndicator = styled.div`
+  height: 40px;
+  border: dashed 3px ${color.Gray};
+  border-radius: 6px;
+  transition: all 50ms ease-out;
+`
+
+Card.DropArea = DropArea
 
 const Container = styled.div.attrs({
   draggable: true,
