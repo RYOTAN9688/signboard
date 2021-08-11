@@ -7,16 +7,26 @@ import { InputForm as _InputForm } from './InputForm'
 
 export const Column = ({
   title,
-  cards,
+  filterValue: rawFilterValue,
+  cards: rawCards,
 }: {
   title?: string
+  filterValue?: string
   cards: {
     id: string
     text?: string
   }[]
 }) => {
+  //filtervalueの文字列の両端の空白を削除
+  const filterValue = rawFilterValue?.trim()
+  //呼び出す文字列を小文字にして変換し、文字列の配列に分割
+  const keywords = filterValue?.toLowerCase().split(/\s+/g) ?? []
+  //配列内の要素が合格するかテスト。プール値を返す
+  const cards = rawCards.filter(({ text }) =>
+    keywords?.every(w => text?.toLowerCase().includes(w)),
+  )
   //カードの個数をカウントし、表示する
-  const totalCount = cards.length
+  const totalCount = rawCards.length
   //テキストに入力された値を管理
   const [text, setText] = useState('')
   //inputFormの表示・非表示を管理
@@ -45,6 +55,7 @@ export const Column = ({
           onCancel={cancelInput}
         />
       )}
+      {filterValue && <ResultCount>{cards.length} results</ResultCount>}
 
       <VerticalScroll>
         {cards.map(({ id, text }) => (
@@ -101,6 +112,11 @@ const AddButton = styled.button.attrs({
 `
 const InputForm = styled(_InputForm)`
   padding: 8px;
+`
+const ResultCount = styled.div`
+  color: ${color.Black};
+  font-size: 12px;
+  text-align: center;
 `
 
 const VerticalScroll = styled.div`

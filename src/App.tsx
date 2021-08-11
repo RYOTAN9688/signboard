@@ -1,38 +1,42 @@
-import React from 'react'
+import React, { useState } from 'react'
 import styled from 'styled-components'
 import { Header as _Header } from './Header'
 import { Column } from './Column'
 
-export const App = () => (
-  <Container>
-    <Header />
-
-    <MainArea>
-      <HorizontalScroll>
-        <Column
-          title="TODO"
-          cards={[
-            { id: 'a', text: '朝食をとる🍞' },
-            { id: 'b', text: 'SNSをチェックする🐦' },
-            { id: 'c', text: '布団に入る(:3[___]' },
-          ]}
-        />
-        <Column
-          title="Doing"
-          cards={[
-            { id: 'd', text: '顔を洗う👐' },
-            { id: 'e', text: '歯を磨く🦷' },
-          ]}
-        />
-        <Column title="Waiting" cards={[]} />
-        <Column
-          title="Done"
-          cards={[{ id: 'f', text: '布団から出る(:3[___]' }]}
-        />
-      </HorizontalScroll>
-    </MainArea>
-  </Container>
-)
+export const App = () => {
+  const [filterValue, setFilterValue] = useState('')
+  return (
+    <Container>
+      <Header filterValue={filterValue} onFilterChange={setFilterValue} />
+      <MainArea>
+        <HorizontalScroll>
+          <Column
+            title="TODO"
+            filterValue={filterValue}
+            cards={[
+              { id: 'a', text: '朝食をとる🍞' },
+              { id: 'b', text: 'SNSをチェックする🐦' },
+              { id: 'c', text: '布団に入る(:3[___]' },
+            ]}
+          />
+          <Column
+            title="Doing"
+            filterValue={filterValue}
+            cards={[
+              { id: 'd', text: '顔を洗う👐' },
+              { id: 'e', text: '歯を磨く🦷' },
+            ]}
+          />
+          <Column title="Waiting" cards={[]} />
+          <Column
+            title="Done"
+            cards={[{ id: 'f', text: '布団から出る(:3[___]' }]}
+          />
+        </HorizontalScroll>
+      </MainArea>
+    </Container>
+  )
+}
 
 const Container = styled.div`
   display: flex;
