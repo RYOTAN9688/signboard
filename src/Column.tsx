@@ -9,6 +9,8 @@ export const Column = ({
   title,
   filterValue: rawFilterValue,
   cards: rawCards,
+  onCardDragStart,
+  onCardDrop,
 }: {
   title?: string
   filterValue?: string
@@ -16,6 +18,8 @@ export const Column = ({
     id: string
     text?: string
   }[]
+  onCardDragStart?(id: string): void
+  onCardDrop?(entered: string | null): void
 }) => {
   //filtervalueの文字列の両端の空白を削除
   const filterValue = rawFilterValue?.trim()
@@ -34,6 +38,10 @@ export const Column = ({
   const toggleInput = () => setInputMode(v => !v)
   const confirmInput = () => setText('')
   const cancelInput = () => setInputMode(false)
+  const handleCardDragStart = (id: string) => {
+    setDraggingCardID(id)
+    onCardDragStart?.(id)
+  }
   //<String | undefined>はユニオン型　成功したときはstringを返し、失敗したときはundefinedを返す
   //stateの型を指定する書き方。
   const [draggingCardID, setDraggingCardID] = useState<string | undefined>(
@@ -70,10 +78,11 @@ export const Column = ({
               draggingCardID !== undefined &&
               (id === draggingCardID || cards[i - 1]?.id === draggingCardID)
             }
+            onDrop={() => onCardDrop?.(id)}
           >
             <Card
               text={text}
-              onDragStart={() => setDraggingCardID(id)}
+              onDragStart={() => handleCardDragStart(id)}
               onDragEnd={() => setDraggingCardID(undefined)}
             />
           </Card.DropArea>
@@ -84,6 +93,7 @@ export const Column = ({
             draggingCardID !== undefined &&
             cards[cards.length - 1]?.id === draggingCardID
           }
+          onDrop={() => onCardDrop?.(null)}
         />
       </VerticalScroll>
     </Container>
