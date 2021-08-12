@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     // Target latest browsers
-    "target": "ES2019",
-    "lib": ["ES2019", "DOM", "DOM.Iterable"],
+    "target": "ES2019", //どのバージョンのjs向けに出力（コンパイル）するか
+    "lib": ["ES2019", "DOM", "DOM.Iterable"], //targetに使いたい機能がない、でも使いたい時にオプションを指定できる
     // Required: Use module="ESNext" so that TS won't compile/disallow any ESM syntax.
     "module": "ESNext",
     // Required for some packages.

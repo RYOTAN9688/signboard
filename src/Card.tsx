@@ -5,15 +5,25 @@ import { CheckIcon as _checkIcon, TrashIcon } from './icon'
 
 //Cardコンポーネントは中身のテキストをtext属性として受けとれるようにしている
 //textにURLが含まれた場合はその部分をリンクに変えている
-export const Card = ({ text }: { text?: string }) => {
+export const Card = ({
+  text,
+  onDragStart,
+  onDragEnd,
+}: {
+  text?: string
+  onDragStart?(): void
+  onDragEnd?(): void
+}) => {
   const [drag, setDrag] = useState(false)
   return (
     <Container
       style={{ opacity: drag ? 0.5 : undefined }}
       onDragStart={() => {
+        onDragStart?.()
         setDrag(true)
       }}
       onDragEnd={() => {
+        onDragEnd?.()
         setDrag(false)
       }}
     >
@@ -33,8 +43,8 @@ export const Card = ({ text }: { text?: string }) => {
   )
 }
 const DropArea = ({
-  disabled,
-  onDrop,
+  disabled, //無効
+  onDrop, //ドロップ
   children,
   className,
   style,
@@ -45,18 +55,24 @@ const DropArea = ({
   className?: string
   style?: React.CSSProperties
 }) => {
+  //targetの状態を管理
   const [isTarget, setIsTarget] = useState(false)
+
   const visible = !disabled && isTarget
 
+  //dragOverの状態はカスタムフックで管理
   const [dragOver, onDragOver] = useDragAutoLeave()
 
   return (
     <DropAreaContainer
       style={style}
       className={className}
+      //onDragOverのときにイベントが無効ならそのまま返す
       onDragOver={ev => {
         if (disabled) return
+        //イベントの動作をキャンセルする
         ev.preventDefault()
+        //元に戻す
         onDragOver(() => setIsTarget(false))
       }}
       onDragEnter={() => {
@@ -98,7 +114,7 @@ const useDragAutoLeave = (timeout: number = 100) => {
         onDragLeave?.()
       }, timeout)
     },
-  ] as const
+  ] as const //これらを定数とする
 }
 
 const DropAreaContainer = styled.div`

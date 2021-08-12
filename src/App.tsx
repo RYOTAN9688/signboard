@@ -5,6 +5,7 @@ import { Column } from './Column'
 
 export const App = () => {
   const [filterValue, setFilterValue] = useState('')
+
   return (
     <Container>
       <Header filterValue={filterValue} onFilterChange={setFilterValue} />
