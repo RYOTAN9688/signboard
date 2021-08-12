@@ -3,6 +3,8 @@ import styled from 'styled-components'
 import produce from 'immer'
 import { Header as _Header } from './Header'
 import { Column } from './Column'
+import { DeleteDiaLog } from './DeleteDialog'
+import { Overlay as _Overlay } from './Overlay'
 
 export const App = () => {
   const [filterValue, setFilterValue] = useState('')
@@ -39,53 +41,57 @@ export const App = () => {
   const [draggingCardID, setDraggingCardID] = useState<string | undefined>(
     undefined,
   )
+  const [deletingCardID, setDeletingCardID] = useState<String | undefined>(
+    undefined,
+  )
+  const deleteCard = () => {
+    const cardID = deletingCardID
+    if (!cardID) return
+
+    setDeletingCardID(undefined)
+
+    type Columns = typeof columns
+    setColumns(
+      produce((columns: Columns) => {
+        const column = columns.find(col => col.cards.some(c => c.id === cardID))
+        if (!column) return
+
+        column.cards = column.cards.filter(c => c.id !== cardID)
+      }),
+    )
+  }
   const dropCardTo = (toID: string) => {
     const fromID = draggingCardID
     if (!fromID) return
     setDraggingCardID(undefined)
     if (fromID === toID) return
-    //setColumns内ではイミュータブルな値の操作をしている。
-    //イミュータブルな値の操作とは、オブジェクトや配列の状態を変更しない値の操作
-    //setColumns内でイミュータブルな操作が必要な理由は、Reactが必要とするから。
-    //もしイミュータブルでない操作をすると、コンポーネントが期待通り再レンダリングせず、
-    //画面が変化しないバグを起こす。
-    setColumns(columns => {
-      //flatMapメソッドにより、すべてのcards配列内から特定のidの値を探す
-      //flatMapはその配列を一段浅くしたネストのない配列([card,card,card])を返す
-      const card = columns.flatMap(col => col.cards).find(c => c.id == fromID)
-      if (!card) {
-        return columns
-      }
-      //Cardの配列の配列(eg.[[card,card][card]])を返す
-      return columns.map(column => {
-        let newColumn = column
 
-        if (newColumn.cards.some(c => c.id === fromID)) {
-          newColumn = {
-            ...newColumn,
-            cards: newColumn.cards.filter(c => c.id !== fromID),
-          }
+    type Columns = typeof columns
+    setColumns(
+      produce((columns: Columns) => {
+        const card = columns
+          .flatMap(col => col.cards)
+          .find(c => c.id === fromID)
+        if (!card) return
+
+        const fromColumn = columns.find(col =>
+          col.cards.some(c => c.id === fromID),
+        )
+        if (!fromColumn) return
+
+        fromColumn.cards = fromColumn.cards.filter(c => c.id !== fromID)
+
+        const toColumn = columns.find(
+          col => col.id === toID || col.cards.some(c => c.id === toID),
+        )
+        if (!toColumn) return
+        let index = toColumn.cards.findIndex(c => c.id === toID)
+        if (index < 0) {
+          index = toColumn.cards.length
         }
-        //列の末尾に移動
-        if (newColumn.id === toID) {
-          newColumn = {
-            ...newColumn,
-            cards: [...newColumn.cards, card],
-          }
-        }
-        //列の末尾以外に移動
-        else if (newColumn.cards.some(c => c.id === toID)) {
-          newColumn = {
-            ...newColumn,
-            //flatMapによって配列に値を挿入している
-            cards: newColumn.cards.flatMap(c =>
-              c.id === toID ? [card, c] : [c],
-            ),
-          }
-        }
-        return newColumn
-      })
-    })
+        toColumn.cards.splice(index, 0, card)
+      }),
+    )
   }
   return (
     <Container>
@@ -100,10 +106,19 @@ export const App = () => {
               cards={cards}
               onCardDragStart={cardID => setDraggingCardID(cardID)}
               onCardDrop={entered => dropCardTo(entered ?? columnID)}
+              onCardDeleteClick={cardID => setDeletingCardID(cardID)}
             />
           ))}
         </HorizontalScroll>
       </MainArea>
+      {deletingCardID && (
+        <Overlay onClick={() => setDeletingCardID(undefined)}>
+          <DeleteDiaLog
+            onConfirm={deleteCard}
+            onCancel={() => setDeletingCardID(undefined)}
+          />
+        </Overlay>
+      )}
     </Container>
   )
 }
@@ -140,4 +155,9 @@ const HorizontalScroll = styled.div`
     flex: 0 0 16px;
     content: '';
   }
+`
+const Overlay = styled(_Overlay)`
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `
