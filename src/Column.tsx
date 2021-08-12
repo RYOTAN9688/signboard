@@ -12,6 +12,10 @@ export const Column = ({
   onCardDragStart,
   onCardDrop,
   onCardDeleteClick,
+  text,
+  onTextChange,
+  onTextConfirm,
+  onTextCancel,
 }: {
   title?: string
   filterValue?: string
@@ -22,6 +26,10 @@ export const Column = ({
   onCardDragStart?(id: string): void
   onCardDrop?(entered: string | null): void
   onCardDeleteClick?(id: string): void
+  text?: string
+  onTextChange?(value: string): void
+  onTextConfirm?(): void
+  onTextCancel?(): void
 }) => {
   //filtervalueの文字列の両端の空白を削除
   const filterValue = rawFilterValue?.trim()
@@ -33,13 +41,17 @@ export const Column = ({
   )
   //カードの個数をカウントし、表示する
   const totalCount = rawCards.length
-  //テキストに入力された値を管理
-  const [text, setText] = useState('')
+
   //inputFormの表示・非表示を管理
   const [inputMode, setInputMode] = useState(false)
   const toggleInput = () => setInputMode(v => !v)
-  const confirmInput = () => setText('')
-  const cancelInput = () => setInputMode(false)
+  const confirmInput = () => {
+    onTextConfirm?.()
+  }
+  const cancelInput = () => {
+    onTextCancel?.()
+  }
+
   const handleCardDragStart = (id: string) => {
     setDraggingCardID(id)
     onCardDragStart?.(id)
@@ -65,7 +77,7 @@ export const Column = ({
         //その時textの値はsetTextに渡した値で新しくなるので、inputFormは新しい値を表示する
         <InputForm
           value={text}
-          onChange={setText}
+          onChange={onTextChange}
           onConfirm={confirmInput}
           onCancel={cancelInput}
         />

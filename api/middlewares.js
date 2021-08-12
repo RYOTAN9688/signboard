@@ -1,4 +1,4 @@
-const jsonServer = repuire('json-server')
+const jsonServer = require('json-server')
 
 module.exports = [
   //GET /api/v1/cardsにアクセスするための設定（必須）
