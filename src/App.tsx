@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import styled from 'styled-components'
+import produce from 'immer'
 import { Header as _Header } from './Header'
 import { Column } from './Column'
 
@@ -43,13 +44,19 @@ export const App = () => {
     if (!fromID) return
     setDraggingCardID(undefined)
     if (fromID === toID) return
-
+    //setColumns内ではイミュータブルな値の操作をしている。
+    //イミュータブルな値の操作とは、オブジェクトや配列の状態を変更しない値の操作
+    //setColumns内でイミュータブルな操作が必要な理由は、Reactが必要とするから。
+    //もしイミュータブルでない操作をすると、コンポーネントが期待通り再レンダリングせず、
+    //画面が変化しないバグを起こす。
     setColumns(columns => {
-      //新たな配列を作り、最初の要素の値を返す
+      //flatMapメソッドにより、すべてのcards配列内から特定のidの値を探す
+      //flatMapはその配列を一段浅くしたネストのない配列([card,card,card])を返す
       const card = columns.flatMap(col => col.cards).find(c => c.id == fromID)
       if (!card) {
         return columns
       }
+      //Cardの配列の配列(eg.[[card,card][card]])を返す
       return columns.map(column => {
         let newColumn = column
 
@@ -70,6 +77,7 @@ export const App = () => {
         else if (newColumn.cards.some(c => c.id === toID)) {
           newColumn = {
             ...newColumn,
+            //flatMapによって配列に値を挿入している
             cards: newColumn.cards.flatMap(c =>
               c.id === toID ? [card, c] : [c],
             ),
