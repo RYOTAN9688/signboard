@@ -98,10 +98,6 @@ const DropArea = ({
   )
 }
 
-//dragOver　イベントが継続中かどうかをrefとして返す
-//timeOut　　経過後に自動でフラグがfalseになる
-//＠param timeout　自動でフラグをfalseにするまでの時間(ms)
-
 const useDragAutoLeave = (timeout: number = 100) => {
   const dragOver = useRef(false)
   const timer = useRef(0)

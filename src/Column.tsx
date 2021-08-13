@@ -56,8 +56,7 @@ export const Column = ({
     setDraggingCardID(id)
     onCardDragStart?.(id)
   }
-  //<String | undefined>はユニオン型　成功したときはstringを返し、失敗したときはundefinedを返す
-  //stateの型を指定する書き方。
+
   const [draggingCardID, setDraggingCardID] = useState<string | undefined>(
     undefined,
   )

@@ -44,9 +44,6 @@ export const InputForm = ({
     </Container>
   )
 }
-/**テキストエリアに高さに合わせて自動調整する
-    @param content 　テキストエリアの内容
-    */
 function useAutoFitContentHeight(content: string | undefined) {
   const ref = useRef<HTMLTextAreaElement>(null)
 
