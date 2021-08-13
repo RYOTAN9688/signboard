@@ -1,3 +1,4 @@
+// https://parceljs.org/env.html
 declare const process: Process
 
 //インターフェイス　オブジェクトの型に名前をつけることができる

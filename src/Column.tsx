@@ -19,7 +19,7 @@ export const Column = ({
 }: {
   title?: string
   filterValue?: string
-  cards: {
+  cards?: {
     id: string
     text?: string
   }[]
@@ -36,11 +36,11 @@ export const Column = ({
   //呼び出す文字列を小文字にして変換し、文字列の配列に分割
   const keywords = filterValue?.toLowerCase().split(/\s+/g) ?? []
   //配列内の要素が合格するかテスト。プール値を返す
-  const cards = rawCards.filter(({ text }) =>
+  const cards = rawCards?.filter(({ text }) =>
     keywords?.every(w => text?.toLowerCase().includes(w)),
   )
   //カードの個数をカウントし、表示する
-  const totalCount = rawCards.length
+  const totalCount = rawCards?.length ?? -1
 
   //inputFormの表示・非表示を管理
   const [inputMode, setInputMode] = useState(false)
@@ -64,7 +64,7 @@ export const Column = ({
   return (
     <Container>
       <Header>
-        <CountBadge>{totalCount}</CountBadge>
+        {totalCount >= 0 && <CountBadge>{totalCount}</CountBadge>}
         <ColumnName>{title}</ColumnName>
 
         <AddButton onClick={toggleInput} />
@@ -82,35 +82,41 @@ export const Column = ({
           onCancel={cancelInput}
         />
       )}
-      {filterValue && <ResultCount>{cards.length} results</ResultCount>}
+      {!cards ? (
+        <Loading />
+      ) : (
+        <>
+          {filterValue && <ResultCount>{cards.length} results</ResultCount>}
 
-      <VerticalScroll>
-        {cards.map(({ id, text }, i) => (
-          <Card.DropArea
-            key={id}
-            disabled={
-              draggingCardID !== undefined &&
-              (id === draggingCardID || cards[i - 1]?.id === draggingCardID)
-            }
-            onDrop={() => onCardDrop?.(id)}
-          >
-            <Card
-              text={text}
-              onDragStart={() => handleCardDragStart(id)}
-              onDragEnd={() => setDraggingCardID(undefined)}
-              onDeleteClick={() => onCardDeleteClick?.(id)}
+          <VerticalScroll>
+            {cards.map(({ id, text }, i) => (
+              <Card.DropArea
+                key={id}
+                disabled={
+                  draggingCardID !== undefined &&
+                  (id === draggingCardID || cards[i - 1]?.id === draggingCardID)
+                }
+                onDrop={() => onCardDrop?.(id)}
+              >
+                <Card
+                  text={text}
+                  onDragStart={() => handleCardDragStart(id)}
+                  onDragEnd={() => setDraggingCardID(undefined)}
+                  onDeleteClick={() => onCardDeleteClick?.(id)}
+                />
+              </Card.DropArea>
+            ))}
+            <Card.DropArea
+              style={{ height: '100%' }}
+              disabled={
+                draggingCardID !== undefined &&
+                cards[cards.length - 1]?.id === draggingCardID
+              }
+              onDrop={() => onCardDrop?.(null)}
             />
-          </Card.DropArea>
-        ))}
-        <Card.DropArea
-          style={{ height: '100%' }}
-          disabled={
-            draggingCardID !== undefined &&
-            cards[cards.length - 1]?.id === draggingCardID
-          }
-          onDrop={() => onCardDrop?.(null)}
-        />
-      </VerticalScroll>
+          </VerticalScroll>
+        </>
+      )}
     </Container>
   )
 }
@@ -161,6 +167,13 @@ const AddButton = styled.button.attrs({
 `
 const InputForm = styled(_InputForm)`
   padding: 8px;
+`
+
+const Loading = styled.div.attrs({
+  children: 'Loading...',
+})`
+  padding: 8px;
+  font-size: 14px;
 `
 const ResultCount = styled.div`
   color: ${color.Black};
