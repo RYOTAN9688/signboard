@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import styled from 'styled-components'
 import produce from 'immer'
 import { randomID } from './util'
+import { api } from './api'
 import { Header as _Header } from './Header'
 import { Column } from './Column'
 import { DeleteDiaLog } from './DeleteDialog'
@@ -57,6 +58,10 @@ export const App = () => {
   }
 
   const addCard = (columnID: string) => {
+    const column = columns.find(c => c.id === columnID)
+    if (!column) return
+
+    const text = column.text
     const cardID = randomID()
 
     type Columns = typeof columns
@@ -72,6 +77,10 @@ export const App = () => {
         column.text = ''
       }),
     )
+    api('POST /v1/cards', {
+      id: cardID,
+      text,
+    })
   }
 
   const [deletingCardID, setDeletingCardID] = useState<String | undefined>(
