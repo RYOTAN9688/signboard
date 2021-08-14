@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import produce from 'immer'
 import { randomID, sortBy, reorderPatch } from './util'
-import { api } from './api'
+import { api, ColumnID, CardID } from './api'
 import { Header as _Header } from './Header'
 import { Column } from './Column'
 import { DeleteDiaLog } from './DeleteDialog'
@@ -10,38 +10,38 @@ import { Overlay as _Overlay } from './Overlay'
 
 type State = {
   columns?: {
-    id: string
+    id: ColumnID
     title?: string
     text?: string
     cards?: {
-      id: string
+      id: CardID
       text?: string
     }[]
   }[]
-  cardsOrder: Record<string, string>
+  cardsOrder: Record<string, CardID | ColumnID>
 }
 
-export const App = () => {
+export function App() {
   const [filterValue, setFilterValue] = useState('')
   const [{ columns, cardsOrder }, setData] = useState<State>({ cardsOrder: {} })
-
   useEffect(() => {
     ;(async () => {
       const columns = await api('GET /v1/columns', null)
-
       setData(
         produce((draft: State) => {
           draft.columns = columns
         }),
       )
-
       const [unorderedCards, cardsOrder] = await Promise.all([
         api('GET /v1/cards', null),
         api('GET /v1/cardsOrder', null),
       ])
+      console.log(unorderedCards)
+      console.log(cardsOrder)
 
       setData(
         produce((draft: State) => {
+          draft.cardsOrder = cardsOrder
           draft.columns?.forEach(column => {
             column.cards = sortBy(unorderedCards, cardsOrder, column.id)
           })
@@ -50,10 +50,36 @@ export const App = () => {
     })()
   }, [])
 
-  const [draggingCardID, setDraggingCardID] = useState<string | undefined>(
+  const [draggingCardID, setDraggingCardID] = useState<CardID | undefined>(
     undefined,
   )
-  const setText = (columnID: string, value: string) => {
+  const dropCardTo = (toID: CardID | ColumnID) => {
+    const fromID = draggingCardID
+    if (!fromID) return
+
+    setDraggingCardID(undefined)
+
+    if (fromID === toID) return
+
+    const patch = reorderPatch(cardsOrder, fromID, toID)
+
+    setData(
+      produce((draft: State) => {
+        draft.cardsOrder = {
+          ...draft.cardsOrder,
+          ...patch,
+        }
+        const unorderedCards = draft.columns?.flatMap(c => c.cards ?? []) ?? []
+        draft.columns?.forEach(column => {
+          column.cards = sortBy(unorderedCards, draft.cardsOrder, column.id)
+        })
+      }),
+    )
+
+    api('PATCH /v1/cardsOrder', patch)
+  }
+
+  const setText = (columnID: ColumnID, value: string) => {
     setData(
       produce((draft: State) => {
         const column = draft.columns?.find(c => c.id === columnID)
@@ -64,12 +90,12 @@ export const App = () => {
     )
   }
 
-  const addCard = (columnID: string) => {
+  const addCard = (columnID: ColumnID) => {
     const column = columns?.find(c => c.id === columnID)
     if (!column) return
 
     const text = column.text
-    const cardID = randomID()
+    const cardID = randomID() as CardID
 
     setData(
       produce((draft: State) => {
@@ -89,47 +115,38 @@ export const App = () => {
     })
   }
 
-  const [deletingCardID, setDeletingCardID] = useState<String | undefined>(
+  const [deletingCardID, setDeletingCardID] = useState<CardID | undefined>(
     undefined,
   )
   const deleteCard = () => {
     const cardID = deletingCardID
+    console.log(cardID)
+
     if (!cardID) return
 
     setDeletingCardID(undefined)
+
+    const patch = reorderPatch(cardsOrder, cardID)
 
     setData(
       produce((draft: State) => {
         const column = draft.columns?.find(col =>
           col.cards?.some(c => c.id === cardID),
         )
-        if (!column) return
+        if (!column?.cards) return
 
-        column.cards = column.cards?.filter(c => c.id !== cardID)
-      }),
-    )
-  }
+        column.cards = column.cards.filter(c => c.id !== cardID)
 
-  const dropCardTo = (toID: string) => {
-    const fromID = draggingCardID
-    if (!fromID) return
-    setDraggingCardID(undefined)
-    if (fromID === toID) return
-
-    const patch = reorderPatch(cardsOrder, fromID, toID)
-
-    setData(
-      produce((draft: State) => {
         draft.cardsOrder = {
           ...draft.cardsOrder,
           ...patch,
         }
-        const unorderedCards = draft.columns?.flatMap(c => c.cards ?? []) ?? []
-        draft.columns?.forEach(column => {
-          column.cards = sortBy(unorderedCards, draft.cardsOrder, column.id)
-        })
       }),
     )
+    api('DELETE /v1/cards', {
+      id: cardID,
+    })
+    api('PATCH /v1/cardsOrder', patch)
   }
 
   return (

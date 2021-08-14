@@ -4,8 +4,9 @@ import * as color from './color'
 import { Card } from './Card'
 import { PlusIcon } from './icon'
 import { InputForm as _InputForm } from './InputForm'
+import { CardID } from './api'
 
-export const Column = ({
+export function Column({
   title,
   filterValue: rawFilterValue,
   cards: rawCards,
@@ -20,17 +21,17 @@ export const Column = ({
   title?: string
   filterValue?: string
   cards?: {
-    id: string
+    id: CardID
     text?: string
   }[]
-  onCardDragStart?(id: string): void
-  onCardDrop?(entered: string | null): void
-  onCardDeleteClick?(id: string): void
+  onCardDragStart?(id: CardID): void
+  onCardDrop?(entered: CardID | null): void
+  onCardDeleteClick?(id: CardID): void
   text?: string
   onTextChange?(value: string): void
   onTextConfirm?(): void
   onTextCancel?(): void
-}) => {
+}) {
   //filtervalueの文字列の両端の空白を削除
   const filterValue = rawFilterValue?.trim()
   //呼び出す文字列を小文字にして変換し、文字列の配列に分割
@@ -49,17 +50,17 @@ export const Column = ({
     onTextConfirm?.()
   }
   const cancelInput = () => {
+    setInputMode(false)
     onTextCancel?.()
   }
 
-  const handleCardDragStart = (id: string) => {
+  const [draggingCardID, setDraggingCardID] = useState<CardID | undefined>(
+    undefined,
+  )
+  const handleCardDragStart = (id: CardID) => {
     setDraggingCardID(id)
     onCardDragStart?.(id)
   }
-
-  const [draggingCardID, setDraggingCardID] = useState<string | undefined>(
-    undefined,
-  )
   return (
     <Container>
       <Header>
@@ -86,7 +87,6 @@ export const Column = ({
       ) : (
         <>
           {filterValue && <ResultCount>{cards.length} results</ResultCount>}
-
           <VerticalScroll>
             {cards.map(({ id, text }, i) => (
               <Card.DropArea

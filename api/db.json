@@ -41,22 +41,18 @@
     {
       "id": "-wkumDeruhSx",
       "text": "布団に入る\n(:3[___]"
-    },
-    {
-      "id": "8l565h5lt8D0",
-      "text": "皿洗いをする"
     }
   ],
   "cardsOrder": {
-    "cXrtw5n8-FsB": "3NRSLMq49xvT",
-    "w7DTqK1QQKTI": "TsXP5w9qLeM-",
-    "bfrqTfEydU38": "bfrqTfEydU38",
-    "dfwMbxZS0EmM": "7lR4Vd3EYixP",
-    "7lR4Vd3EYixP": "dfwMbxZS0EmM",
-    "TsXP5w9qLeM-": "rh022hj9zG58",
-    "rh022hj9zG58": "w7DTqK1QQKTI",
-    "3NRSLMq49xvT": "ulnuLLt5TN93",
-    "ulnuLLt5TN93": "-wkumDeruhSx",
-    "-wkumDeruhSx": "cXrtw5n8-FsB"
+    "cXrtw5n8-FsB": "-wkumDeruhSx",
+    "w7DTqK1QQKTI": "rh022hj9zG58",
+    "bfrqTfEydU38": "7lR4Vd3EYixP",
+    "dfwMbxZS0EmM": "ulnuLLt5TN93",
+    "7lR4Vd3EYixP": "bfrqTfEydU38",
+    "TsXP5w9qLeM-": "cXrtw5n8-FsB",
+    "rh022hj9zG58": "3NRSLMq49xvT",
+    "3NRSLMq49xvT": "w7DTqK1QQKTI",
+    "ulnuLLt5TN93": "dfwMbxZS0EmM",
+    "-wkumDeruhSx": "TsXP5w9qLeM-"
   }
 }

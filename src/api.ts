@@ -1,32 +1,45 @@
+export type ColumnID = string & { readonly brand: unique symbol }
+export type CardID = string & { readonly brand: unique symbol }
 export type ReqAndRes = {
   'GET /v1/columns': {
     req: null
     res: {
-      id: string
+      id: ColumnID
       title?: string
     }[]
   }
   'GET /v1/cards': {
     req: null
     res: {
-      id: string
+      id: CardID
       text?: string
     }[]
   }
 
   'POST /v1/cards': {
     req: {
-      id: string
+      id: CardID
       text?: string
     }
     res: {
-      id: string
+      id: CardID
       text?: string
     }
   }
+
+  'DELETE /v1/cards': {
+    req: {
+      id: CardID
+    }
+    res: {}
+  }
   'GET /v1/cardsOrder': {
     req: null
-    res: Record<string, string>
+    res: Record<string, CardID | ColumnID>
+  }
+  'PATCH /v1/cardsOrder': {
+    req: Record<string, CardID | ColumnID>
+    res: Record<string, CardID | ColumnID>
   }
 }
 
@@ -83,6 +96,8 @@ export async function api<K extends keyof ReqAndRes>(
   )
 }
 //classとは動作、状態を定義した構造
+//extendsを使って既存のクラスを継承した新しいクラスを定義。
+//class 子クラス　extends　親クラス
 export class APIError extends Error {
   constructor(
     public method: string,
@@ -94,6 +109,7 @@ export class APIError extends Error {
     public type: string,
     public text?: string,
   ) {
+    //Errorのコンストラクタ処理を呼び出す
     super(`${method} ${url} ${status} (${statusText})`)
   }
 }
