@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
+import { useDispatch, useSelector } from 'react-redux'
 import produce from 'immer'
 import { randomID, sortBy, reorderPatch } from './util'
 import { api, ColumnID, CardID } from './api'
+import { State as RootState, Action } from './reducrer'
 import { Header as _Header } from './Header'
 import { Column } from './Column'
 import { DeleteDiaLog } from './DeleteDialog'
@@ -22,7 +24,12 @@ type State = {
 }
 
 export function App() {
-  const [filterValue, setFilterValue] = useState('')
+  const dispatch = useDispatch()
+  //stateが変化するたびに呼び出され、選択した値(filterValue)が変化すれば、コンポーネントが再レンダリングする
+  const filterValue = useSelector((state: RootState) => state.filterValue)
+  const setFilterValue = (value: string) =>
+    dispatch<Action>({ type: 'Filter.Setfilter', paylaod: { value } })
+
   const [{ columns, cardsOrder }, setData] = useState<State>({ cardsOrder: {} })
   useEffect(() => {
     ;(async () => {
