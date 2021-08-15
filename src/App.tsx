@@ -1,26 +1,13 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import styled from 'styled-components'
 import { useDispatch, useSelector } from 'react-redux'
 import produce from 'immer'
-import { randomID, sortBy, reorderPatch } from './util'
+import { randomID, reorderPatch } from './util'
 import { api, ColumnID, CardID } from './api'
 import { Header as _Header } from './Header'
 import { Column } from './Column'
 import { DeleteDiaLog } from './DeleteDialog'
 import { Overlay as _Overlay } from './Overlay'
-
-type State = {
-  columns?: {
-    id: ColumnID
-    title?: string
-    text?: string
-    cards?: {
-      id: CardID
-      text?: string
-    }[]
-  }[]
-  cardsOrder: Record<string, CardID | ColumnID | null>
-}
 
 export function App() {
   const dispatch = useDispatch()
@@ -31,8 +18,12 @@ export function App() {
 
   const columns = useSelector(state => state.columns)
   const cardsOrder = useSelector(state => state.cardsOrder)
-  //TODO ビルドを通すためだけのスタブ実装なので、ちゃんとしたものにする
-  const setData = fn => fn({ cardsOrder: {} })
+
+  const cardIsBeingDeleted = useSelector(state => Boolean(state.deletingCardID))
+  const setDeletingCardID = (cardID: CardID) =>
+    dispatch({ type: 'Card.SetDeletingCard', payload: { cardID } })
+  const cancelDelete = () => dispatch({ type: 'Dialog.CancelDelete' })
+
   useEffect(() => {
     ;(async () => {
       const columns = await api('GET /v1/columns', null)
@@ -59,44 +50,40 @@ export function App() {
     })()
   }, [dispatch])
 
-  const [draggingCardID, setDraggingCardID] = useState<CardID | undefined>(
-    undefined,
-  )
+  const draggingCardID = useSelector(state => state.draggingCardID)
+  const setDraggingCardID = (cardID: CardID) =>
+    dispatch({
+      type: 'Card.StartDragging',
+      payload: {
+        cardID,
+      },
+    })
   const dropCardTo = (toID: CardID | ColumnID) => {
     const fromID = draggingCardID
     if (!fromID) return
-
-    setDraggingCardID(undefined)
 
     if (fromID === toID) return
 
     const patch = reorderPatch(cardsOrder, fromID, toID)
 
-    setData(
-      produce((draft: State) => {
-        draft.cardsOrder = {
-          ...draft.cardsOrder,
-          ...patch,
-        }
-        const unorderedCards = draft.columns?.flatMap(c => c.cards ?? []) ?? []
-        draft.columns?.forEach(column => {
-          column.cards = sortBy(unorderedCards, draft.cardsOrder, column.id)
-        })
-      }),
-    )
+    dispatch({
+      type: 'Card.Drop',
+      payload: {
+        toID,
+      },
+    })
 
     api('PATCH /v1/cardsOrder', patch)
   }
 
   const setText = (columnID: ColumnID, value: string) => {
-    setData(
-      produce((draft: State) => {
-        const column = draft.columns?.find(c => c.id === columnID)
-        if (!column) return
-
-        column.text = value
-      }),
-    )
+    dispatch({
+      type: 'InputForm.SetText',
+      payload: {
+        columnID,
+        value,
+      },
+    })
   }
 
   const addCard = (columnID: ColumnID) => {
@@ -106,56 +93,18 @@ export function App() {
     const text = column.text
     const cardID = randomID() as CardID
 
-    setData(
-      produce((draft: State) => {
-        const column = draft.columns?.find(c => c.id === columnID)
-        if (!column) return
+    dispatch({
+      type: 'InputForm.ConfirmInput',
+      payload: {
+        columnID,
+        cardID,
+      },
+    })
 
-        column.cards?.unshift({
-          id: cardID,
-          text: column.text,
-        })
-        column.text = ''
-      }),
-    )
     api('POST /v1/cards', {
       id: cardID,
       text,
     })
-  }
-
-  const [deletingCardID, setDeletingCardID] = useState<CardID | undefined>(
-    undefined,
-  )
-  const deleteCard = () => {
-    const cardID = deletingCardID
-    console.log(cardID)
-
-    if (!cardID) return
-
-    setDeletingCardID(undefined)
-
-    const patch = reorderPatch(cardsOrder, cardID)
-
-    setData(
-      produce((draft: State) => {
-        const column = draft.columns?.find(col =>
-          col.cards?.some(c => c.id === cardID),
-        )
-        if (!column?.cards) return
-
-        column.cards = column.cards.filter(c => c.id !== cardID)
-
-        draft.cardsOrder = {
-          ...draft.cardsOrder,
-          ...patch,
-        }
-      }),
-    )
-    api('DELETE /v1/cards', {
-      id: cardID,
-    })
-    api('PATCH /v1/cardsOrder', patch)
   }
 
   return (
@@ -183,12 +132,9 @@ export function App() {
           )}
         </HorizontalScroll>
       </MainArea>
-      {deletingCardID && (
-        <Overlay onClick={() => setDeletingCardID(undefined)}>
-          <DeleteDiaLog
-            onConfirm={deleteCard}
-            onCancel={() => setDeletingCardID(undefined)}
-          />
+      {cardIsBeingDeleted && (
+        <Overlay onClick={cancelDelete}>
+          <DeleteDiaLog />
         </Overlay>
       )}
     </Container>
