@@ -4,7 +4,6 @@ import { useDispatch, useSelector } from 'react-redux'
 import produce from 'immer'
 import { randomID, sortBy, reorderPatch } from './util'
 import { api, ColumnID, CardID } from './api'
-import { State as RootState, Action } from './reducrer'
 import { Header as _Header } from './Header'
 import { Column } from './Column'
 import { DeleteDiaLog } from './DeleteDialog'
@@ -20,25 +19,29 @@ type State = {
       text?: string
     }[]
   }[]
-  cardsOrder: Record<string, CardID | ColumnID>
+  cardsOrder: Record<string, CardID | ColumnID | null>
 }
 
 export function App() {
   const dispatch = useDispatch()
   //stateが変化するたびに呼び出され、選択した値(filterValue)が変化すれば、コンポーネントが再レンダリングする
-  const filterValue = useSelector((state: RootState) => state.filterValue)
+  const filterValue = useSelector(state => state.filterValue)
   const setFilterValue = (value: string) =>
-    dispatch<Action>({ type: 'Filter.Setfilter', paylaod: { value } })
+    dispatch({ type: 'Filter.Setfilter', payload: { value } })
 
-  const [{ columns, cardsOrder }, setData] = useState<State>({ cardsOrder: {} })
+  const columns = useSelector(state => state.columns)
+  const cardsOrder = useSelector(state => state.cardsOrder)
+  //TODO ビルドを通すためだけのスタブ実装なので、ちゃんとしたものにする
+  const setData = fn => fn({ cardsOrder: {} })
   useEffect(() => {
     ;(async () => {
       const columns = await api('GET /v1/columns', null)
-      setData(
-        produce((draft: State) => {
-          draft.columns = columns
-        }),
-      )
+      dispatch({
+        type: 'App.SetColumns',
+        payload: {
+          columns,
+        },
+      })
       const [unorderedCards, cardsOrder] = await Promise.all([
         api('GET /v1/cards', null),
         api('GET /v1/cardsOrder', null),
@@ -46,16 +49,15 @@ export function App() {
       console.log(unorderedCards)
       console.log(cardsOrder)
 
-      setData(
-        produce((draft: State) => {
-          draft.cardsOrder = cardsOrder
-          draft.columns?.forEach(column => {
-            column.cards = sortBy(unorderedCards, cardsOrder, column.id)
-          })
-        }),
-      )
+      dispatch({
+        type: 'App.SetCards',
+        payload: {
+          cards: unorderedCards,
+          cardsOrder,
+        },
+      })
     })()
-  }, [])
+  }, [dispatch])
 
   const [draggingCardID, setDraggingCardID] = useState<CardID | undefined>(
     undefined,

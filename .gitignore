@@ -6,3 +6,5 @@ node_modules/
 
 #TypeScript
 /.ts-cache/
+#Test
+/test/dist/
