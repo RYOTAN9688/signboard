@@ -1,27 +1,48 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch, useStore } from 'react-redux'
 import * as color from './color'
 import { SearchIcon as _SearchIcon } from './icon'
 
 export function CardFilter() {
+  const store = useStore()
   const dispatch = useDispatch()
-  const value = useSelector(state => state.filterValue)
-  const onChange = (value: string) =>
-    dispatch({
-      type: 'Filter.Setfilter',
-      payload: {
-        value,
-      },
-    })
+  const [value, setValue] = useState('')
 
+  useEffect(
+    () =>
+      //状態が変更されたことをきっかけに行う処理を登録
+      store.subscribe(() => {
+        //コールバック時にストアの状態をするためにgetstatusを使う
+        const { filterValue } = store.getState()
+        if (value === filterValue) return
+
+        setValue(filterValue)
+      }),
+    [store, value],
+  )
+
+  useEffect(() => {
+    const timer = setTimeout(
+      () =>
+        dispatch({
+          type: 'Filter.Setfilter',
+          payload: {
+            value,
+          },
+        }),
+      400,
+    )
+
+    return () => clearTimeout(timer)
+  }, [dispatch, value])
   return (
     <Container>
       <SearchIcon />
       <Input
         placeholder="Filter cards"
         value={value}
-        onChange={ev => onChange(ev.currentTarget.value)}
+        onChange={ev => setValue(ev.currentTarget.value)}
       />
     </Container>
   )
