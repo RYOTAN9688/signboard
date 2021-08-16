@@ -1,8 +1,7 @@
 import React, { useEffect } from 'react'
 import styled from 'styled-components'
 import { useDispatch, useSelector } from 'react-redux'
-import { randomID, reorderPatch } from './util'
-import { api, ColumnID, CardID } from './api'
+import { api } from './api'
 import { Header as _Header } from './Header'
 import { Column } from './Column'
 import { DeleteDiaLog } from './DeleteDialog'
@@ -12,7 +11,7 @@ export function App() {
   const dispatch = useDispatch()
 
   const columns = useSelector(state => state.columns)
-  const cardsOrder = useSelector(state => state.cardsOrder)
+
   const cardIsBeingDeleted = useSelector(state => Boolean(state.deletingCardID))
 
   const cancelDelete = () => dispatch({ type: 'Dialog.CancelDelete' })
@@ -43,57 +42,6 @@ export function App() {
     })()
   }, [dispatch])
 
-  const draggingCardID = useSelector(state => state.draggingCardID)
-
-  const dropCardTo = (toID: CardID | ColumnID) => {
-    const fromID = draggingCardID
-    if (!fromID) return
-
-    if (fromID === toID) return
-
-    const patch = reorderPatch(cardsOrder, fromID, toID)
-
-    dispatch({
-      type: 'Card.Drop',
-      payload: {
-        toID,
-      },
-    })
-
-    api('PATCH /v1/cardsOrder', patch)
-  }
-
-  const setText = (columnID: ColumnID, value: string) => {
-    dispatch({
-      type: 'InputForm.SetText',
-      payload: {
-        columnID,
-        value,
-      },
-    })
-  }
-
-  const addCard = (columnID: ColumnID) => {
-    const column = columns?.find(c => c.id === columnID)
-    if (!column) return
-
-    const text = column.text
-    const cardID = randomID() as CardID
-
-    dispatch({
-      type: 'InputForm.ConfirmInput',
-      payload: {
-        columnID,
-        cardID,
-      },
-    })
-
-    api('POST /v1/cards', {
-      id: cardID,
-      text,
-    })
-  }
-
   return (
     <Container>
       <Header />
@@ -102,15 +50,12 @@ export function App() {
           {!columns ? (
             <Loading />
           ) : (
-            columns.map(({ id: columnID, title, cards, text }) => (
+            columns.map(({ id: columnID, title, cards }) => (
               <Column
+                id={columnID}
                 key={columnID}
                 title={title}
                 cards={cards}
-                onCardDrop={entered => dropCardTo(entered ?? columnID)}
-                text={text}
-                onTextChange={value => setText(columnID, value)}
-                onTextConfirm={() => addCard(columnID)}
               />
             ))
           )}

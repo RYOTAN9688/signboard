@@ -5,26 +5,20 @@ import * as color from './color'
 import { Card } from './Card'
 import { PlusIcon } from './icon'
 import { InputForm as _InputForm } from './InputForm'
-import { CardID } from './api'
+import { CardID, ColumnID } from './api'
 
 export function Column({
+  id: columnID,
   title,
   cards: rawCards,
-  onCardDrop,
-  text,
-  onTextChange,
-  onTextConfirm,
   onTextCancel,
 }: {
+  id: ColumnID
   title?: string
   cards?: {
     id: CardID
     text?: string
   }[]
-  onCardDrop?(entered: CardID | null): void
-  text?: string
-  onTextChange?(value: string): void
-  onTextConfirm?(): void
   onTextCancel?(): void
 }) {
   const filterValue = useSelector(state => state.filterValue.trim())
@@ -39,9 +33,7 @@ export function Column({
   //inputFormの表示・非表示を管理
   const [inputMode, setInputMode] = useState(false)
   const toggleInput = () => setInputMode(v => !v)
-  const confirmInput = () => {
-    onTextConfirm?.()
-  }
+
   const cancelInput = () => {
     setInputMode(false)
     onTextCancel?.()
@@ -61,12 +53,7 @@ export function Column({
         //inputFormは入力があるたびonChangeに渡したsetTextを呼ぶ。
         //setTextを呼ぶとcolumnが再レンダリングしColumn関数が再び呼び出される
         //その時textの値はsetTextに渡した値で新しくなるので、inputFormは新しい値を表示する
-        <InputForm
-          value={text}
-          onChange={onTextChange}
-          onConfirm={confirmInput}
-          onCancel={cancelInput}
-        />
+        <InputForm columnID={columnID} onCancel={cancelInput} />
       )}
       {!cards ? (
         <Loading />
@@ -77,22 +64,22 @@ export function Column({
             {cards.map(({ id }, i) => (
               <Card.DropArea
                 key={id}
+                targetID={id}
                 disabled={
                   draggingCardID !== undefined &&
                   (id === draggingCardID || cards[i - 1]?.id === draggingCardID)
                 }
-                onDrop={() => onCardDrop?.(id)}
               >
                 <Card id={id} />
               </Card.DropArea>
             ))}
             <Card.DropArea
+              targetID={columnID}
               style={{ height: '100%' }}
               disabled={
                 draggingCardID !== undefined &&
                 cards[cards.length - 1]?.id === draggingCardID
               }
-              onDrop={() => onCardDrop?.(null)}
             />
           </VerticalScroll>
         </>

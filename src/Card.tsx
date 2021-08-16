@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react'
 import styled from 'styled-components'
 import { useDispatch, useSelector } from 'react-redux'
-import { CardID } from './api'
+import { reorderPatch } from './util'
+import { api, ColumnID, CardID } from './api'
 import * as color from './color'
 import { CheckIcon as _checkIcon, TrashIcon } from './icon'
 
@@ -52,21 +53,24 @@ export const Card = ({ id }: { id: CardID }) => {
   )
 }
 const DropArea = ({
+  targetID: toID,
   disabled, //無効
-  onDrop, //ドロップ
   children,
   className,
   style,
 }: {
+  targetID: CardID | ColumnID
   disabled?: boolean
-  onDrop?(): void
   children?: React.ReactNode
   className?: string
   style?: React.CSSProperties
 }) => {
+  const dispatch = useDispatch()
+  const draggingCardID = useSelector(state => state.draggingCardID)
+  const cardsOrder = useSelector(state => state.cardsOrder)
+
   //targetの状態を管理
   const [isTarget, setIsTarget] = useState(false)
-
   const visible = !disabled && isTarget
 
   //dragOverの状態はカスタムフックで管理
@@ -90,8 +94,18 @@ const DropArea = ({
       }}
       onDrop={() => {
         if (disabled) return
+        if (!draggingCardID || draggingCardID === toID) return
+
+        dispatch({
+          type: 'Card.Drop',
+          payload: {
+            toID,
+          },
+        })
+
+        const patch = reorderPatch(cardsOrder, draggingCardID, toID)
+        api('PATCH /v1/cardsOrder', patch)
         setIsTarget(false)
-        onDrop?.()
       }}
     >
       <DropAreaIndicator
