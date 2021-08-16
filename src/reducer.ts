@@ -76,6 +76,9 @@ export type Action =
       }
     }
   | {
+      type: 'Card.EndDragging'
+    }
+  | {
       type: 'Card.Drop'
       payload: {
         toID: CardID | ColumnID
@@ -162,6 +165,10 @@ export const reducer: Reducer<State, Action> = produce(
         const { cardID } = action.payload
 
         draft.draggingCardID = cardID
+        return
+      }
+      case 'Card.EndDragging': {
+        draft.draggingCardID = undefined
         return
       }
 

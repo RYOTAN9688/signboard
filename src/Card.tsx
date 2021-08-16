@@ -1,32 +1,39 @@
 import React, { useState, useRef } from 'react'
 import styled from 'styled-components'
+import { useDispatch, useSelector } from 'react-redux'
+import { CardID } from './api'
 import * as color from './color'
 import { CheckIcon as _checkIcon, TrashIcon } from './icon'
 
 //Cardコンポーネントは中身のテキストをtext属性として受けとれるようにしている
 //textにURLが含まれた場合はその部分をリンクに変えている
-export const Card = ({
-  text,
-  onDragStart,
-  onDragEnd,
-  onDeleteClick,
-}: {
-  text?: string
-  onDragStart?(): void
-  onDragEnd?(): void
-  onDeleteClick?(): void
-}) => {
-  const [drag, setDrag] = useState(false)
+export const Card = ({ id }: { id: CardID }) => {
+  const dispatch = useDispatch()
+  const card = useSelector(state =>
+    state.columns?.flatMap(c => c.cards ?? []).find(c => c.id === id),
+  )
+  const drag = useSelector(state => state.draggingCardID === id)
+
+  const onDeleteClick = () =>
+    dispatch({ type: 'Card.SetDeletingCard', payload: { cardID: id } })
+
+  if (!card) {
+    return null
+  }
+  const { text } = card
   return (
     <Container
       style={{ opacity: drag ? 0.5 : undefined }}
       onDragStart={() => {
-        onDragStart?.()
-        setDrag(true)
+        dispatch({
+          type: 'Card.StartDragging',
+          payload: {
+            cardID: id,
+          },
+        })
       }}
       onDragEnd={() => {
-        onDragEnd?.()
-        setDrag(false)
+        dispatch({ type: 'Card.EndDragging' })
       }}
     >
       <CheckIcon />

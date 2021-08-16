@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react'
 import styled from 'styled-components'
 import { useDispatch, useSelector } from 'react-redux'
-import produce from 'immer'
 import { randomID, reorderPatch } from './util'
 import { api, ColumnID, CardID } from './api'
 import { Header as _Header } from './Header'
@@ -11,17 +10,11 @@ import { Overlay as _Overlay } from './Overlay'
 
 export function App() {
   const dispatch = useDispatch()
-  //stateが変化するたびに呼び出され、選択した値(filterValue)が変化すれば、コンポーネントが再レンダリングする
-  const filterValue = useSelector(state => state.filterValue)
-  const setFilterValue = (value: string) =>
-    dispatch({ type: 'Filter.Setfilter', payload: { value } })
 
   const columns = useSelector(state => state.columns)
   const cardsOrder = useSelector(state => state.cardsOrder)
-
   const cardIsBeingDeleted = useSelector(state => Boolean(state.deletingCardID))
-  const setDeletingCardID = (cardID: CardID) =>
-    dispatch({ type: 'Card.SetDeletingCard', payload: { cardID } })
+
   const cancelDelete = () => dispatch({ type: 'Dialog.CancelDelete' })
 
   useEffect(() => {
@@ -51,13 +44,7 @@ export function App() {
   }, [dispatch])
 
   const draggingCardID = useSelector(state => state.draggingCardID)
-  const setDraggingCardID = (cardID: CardID) =>
-    dispatch({
-      type: 'Card.StartDragging',
-      payload: {
-        cardID,
-      },
-    })
+
   const dropCardTo = (toID: CardID | ColumnID) => {
     const fromID = draggingCardID
     if (!fromID) return
@@ -109,7 +96,7 @@ export function App() {
 
   return (
     <Container>
-      <Header filterValue={filterValue} onFilterChange={setFilterValue} />
+      <Header />
       <MainArea>
         <HorizontalScroll>
           {!columns ? (
@@ -119,11 +106,8 @@ export function App() {
               <Column
                 key={columnID}
                 title={title}
-                filterValue={filterValue}
                 cards={cards}
-                onCardDragStart={cardID => setDraggingCardID(cardID)}
                 onCardDrop={entered => dropCardTo(entered ?? columnID)}
-                onCardDeleteClick={cardID => setDeletingCardID(cardID)}
                 text={text}
                 onTextChange={value => setText(columnID, value)}
                 onTextConfirm={() => addCard(columnID)}

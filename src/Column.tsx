@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import styled from 'styled-components'
+import { useSelector } from 'react-redux'
 import * as color from './color'
 import { Card } from './Card'
 import { PlusIcon } from './icon'
@@ -8,34 +9,26 @@ import { CardID } from './api'
 
 export function Column({
   title,
-  filterValue: rawFilterValue,
   cards: rawCards,
-  onCardDragStart,
   onCardDrop,
-  onCardDeleteClick,
   text,
   onTextChange,
   onTextConfirm,
   onTextCancel,
 }: {
   title?: string
-  filterValue?: string
   cards?: {
     id: CardID
     text?: string
   }[]
-  onCardDragStart?(id: CardID): void
   onCardDrop?(entered: CardID | null): void
-  onCardDeleteClick?(id: CardID): void
   text?: string
   onTextChange?(value: string): void
   onTextConfirm?(): void
   onTextCancel?(): void
 }) {
-  //filtervalueの文字列の両端の空白を削除
-  const filterValue = rawFilterValue?.trim()
-  //呼び出す文字列を小文字にして変換し、文字列の配列に分割
-  const keywords = filterValue?.toLowerCase().split(/\s+/g) ?? []
+  const filterValue = useSelector(state => state.filterValue.trim())
+  const keywords = filterValue.toLowerCase().split(/\s+/g) ?? []
   //配列内の要素が合格するかテスト。プール値を返す
   const cards = rawCards?.filter(({ text }) =>
     keywords?.every(w => text?.toLowerCase().includes(w)),
@@ -53,14 +46,7 @@ export function Column({
     setInputMode(false)
     onTextCancel?.()
   }
-
-  const [draggingCardID, setDraggingCardID] = useState<CardID | undefined>(
-    undefined,
-  )
-  const handleCardDragStart = (id: CardID) => {
-    setDraggingCardID(id)
-    onCardDragStart?.(id)
-  }
+  const draggingCardID = useSelector(state => state.draggingCardID)
   return (
     <Container>
       <Header>
@@ -88,7 +74,7 @@ export function Column({
         <>
           {filterValue && <ResultCount>{cards.length} results</ResultCount>}
           <VerticalScroll>
-            {cards.map(({ id, text }, i) => (
+            {cards.map(({ id }, i) => (
               <Card.DropArea
                 key={id}
                 disabled={
@@ -97,12 +83,7 @@ export function Column({
                 }
                 onDrop={() => onCardDrop?.(id)}
               >
-                <Card
-                  text={text}
-                  onDragStart={() => handleCardDragStart(id)}
-                  onDragEnd={() => setDraggingCardID(undefined)}
-                  onDeleteClick={() => onCardDeleteClick?.(id)}
-                />
+                <Card id={id} />
               </Card.DropArea>
             ))}
             <Card.DropArea
