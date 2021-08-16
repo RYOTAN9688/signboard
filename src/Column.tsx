@@ -5,40 +5,34 @@ import * as color from './color'
 import { Card } from './Card'
 import { PlusIcon } from './icon'
 import { InputForm as _InputForm } from './InputForm'
-import { CardID, ColumnID } from './api'
+import { ColumnID } from './api'
 
-export function Column({
-  id: columnID,
-  title,
-  cards: rawCards,
-  onTextCancel,
-}: {
-  id: ColumnID
-  title?: string
-  cards?: {
-    id: CardID
-    text?: string
-  }[]
-  onTextCancel?(): void
-}) {
-  const filterValue = useSelector(state => state.filterValue.trim())
-  const keywords = filterValue.toLowerCase().split(/\s+/g) ?? []
-  //配列内の要素が合格するかテスト。プール値を返す
-  const cards = rawCards?.filter(({ text }) =>
-    keywords?.every(w => text?.toLowerCase().includes(w)),
-  )
-  //カードの個数をカウントし、表示する
-  const totalCount = rawCards?.length ?? -1
+export function Column({ id: columnID }: { id: ColumnID }) {
+  const { column, cards, filtered, totalCount } = useSelector(state => {
+    const filterValue = state.filterValue.trim()
+    const filtered = Boolean(filterValue)
+    const keywords = filterValue.toLowerCase().split(/\s+/g)
+    const column = state.columns?.find(c => c.id === columnID)
+    //配列内の要素が合格するかテスト。プール値を返す
+    const cards = column?.cards?.filter(({ text }) =>
+      keywords?.every(w => text?.toLowerCase().includes(w)),
+    )
+    //カードの個数をカウントし、表示する
+    const totalCount = column?.cards?.length ?? -1
+
+    return { column, cards, filtered, totalCount }
+  })
+  const draggingCardID = useSelector(state => state.draggingCardID)
 
   //inputFormの表示・非表示を管理
   const [inputMode, setInputMode] = useState(false)
   const toggleInput = () => setInputMode(v => !v)
 
-  const cancelInput = () => {
-    setInputMode(false)
-    onTextCancel?.()
+  const cancelInput = () => setInputMode(false)
+  if (!column) {
+    return null
   }
-  const draggingCardID = useSelector(state => state.draggingCardID)
+  const { title } = column
   return (
     <Container>
       <Header>
@@ -59,7 +53,7 @@ export function Column({
         <Loading />
       ) : (
         <>
-          {filterValue && <ResultCount>{cards.length} results</ResultCount>}
+          {filtered && <ResultCount>{cards.length} results</ResultCount>}
           <VerticalScroll>
             {cards.map(({ id }, i) => (
               <Card.DropArea

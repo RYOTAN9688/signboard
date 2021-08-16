@@ -9,28 +9,25 @@ import { Overlay as _Overlay } from './Overlay'
 
 export function App() {
   const dispatch = useDispatch()
-
   const columns = useSelector(state => state.columns)
-
   const cardIsBeingDeleted = useSelector(state => Boolean(state.deletingCardID))
-
   const cancelDelete = () => dispatch({ type: 'Dialog.CancelDelete' })
 
   useEffect(() => {
     ;(async () => {
       const columns = await api('GET /v1/columns', null)
+
       dispatch({
         type: 'App.SetColumns',
         payload: {
           columns,
         },
       })
+
       const [unorderedCards, cardsOrder] = await Promise.all([
         api('GET /v1/cards', null),
         api('GET /v1/cardsOrder', null),
       ])
-      console.log(unorderedCards)
-      console.log(cardsOrder)
 
       dispatch({
         type: 'App.SetCards',
@@ -45,22 +42,17 @@ export function App() {
   return (
     <Container>
       <Header />
+
       <MainArea>
         <HorizontalScroll>
           {!columns ? (
             <Loading />
           ) : (
-            columns.map(({ id: columnID, title, cards }) => (
-              <Column
-                id={columnID}
-                key={columnID}
-                title={title}
-                cards={cards}
-              />
-            ))
+            columns.map(({ id }) => <Column id={id} key={id} />)
           )}
         </HorizontalScroll>
       </MainArea>
+
       {cardIsBeingDeleted && (
         <Overlay onClick={cancelDelete}>
           <DeleteDiaLog />
